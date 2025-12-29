@@ -32,5 +32,5 @@ ENV PYTHONPATH=/app
 # Expose port (if running server)
 EXPOSE 8000
 
-# Default command
-CMD ["python", "-m", "scripts.python.cli"]
+# Default command - run the FastAPI server
+CMD ["uvicorn", "scripts.python.server:app", "--host", "0.0.0.0", "--port", "8000"]

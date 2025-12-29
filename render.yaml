@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: weather-prediction-agent
+    env: python
+    buildCommand: pip install -e ".[dev]"
+    startCommand: uvicorn scripts.python.server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENWEATHER_API_KEY
+        sync: false
+      - key: WEATHERAPI_KEY
+        sync: false
+      - key: NEWSAPI_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+    healthCheckPath: /health
+    plan: starter  # Change to 'standard' or 'pro' for production

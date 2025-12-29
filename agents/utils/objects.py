@@ -226,3 +226,73 @@ class Article(BaseModel):
     urlToImage: Optional[str]
     publishedAt: Optional[str]
     content: Optional[str]
+
+
+# Weather-specific models
+class WeatherCondition(BaseModel):
+    """Represents a weather condition at a specific time"""
+    temperature: float
+    feels_like: Optional[float] = None
+    humidity: Optional[float] = None
+    pressure: Optional[float] = None
+    visibility: Optional[float] = None
+    wind_speed: Optional[float] = None
+    wind_direction: Optional[float] = None
+    cloudiness: Optional[float] = None
+    precipitation: Optional[float] = None
+    description: Optional[str] = None
+    main_condition: Optional[str] = None  # e.g., "Rain", "Clear", "Clouds"
+    icon: Optional[str] = None
+    timestamp: Optional[str] = None
+
+
+class WeatherLocation(BaseModel):
+    """Represents a geographic location for weather queries"""
+    name: str
+    country: Optional[str] = None
+    state: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    timezone: Optional[str] = None
+    elevation: Optional[float] = None
+
+
+class WeatherForecast(BaseModel):
+    """Represents a weather forecast for a location"""
+    location: WeatherLocation
+    current: Optional[WeatherCondition] = None
+    forecasts: list[WeatherCondition] = []  # Hourly or daily forecasts
+    forecast_type: str = "daily"  # "hourly" or "daily"
+    source: Optional[str] = None  # "openweather", "weatherapi", etc.
+    created_at: Optional[str] = None
+    confidence: Optional[float] = None  # Prediction confidence score
+
+
+class WeatherEvent(BaseModel):
+    """Represents a significant weather event (storm, heatwave, etc.)"""
+    id: str
+    title: str
+    description: str
+    location: WeatherLocation
+    event_type: str  # "hurricane", "tornado", "heatwave", "blizzard", etc.
+    severity: Optional[str] = None  # "low", "moderate", "high", "extreme"
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    active: bool = True
+    alerts: list[str] = []
+    impact_areas: list[str] = []
+
+
+class SimpleWeatherForecast(BaseModel):
+    """Simplified weather forecast model for RAG and filtering"""
+    id: str
+    location_name: str
+    question: str  # e.g., "Will it rain tomorrow?"
+    description: str
+    forecast_date: str
+    end_date: Optional[str] = None
+    active: bool = True
+    temperature_range: str  # e.g., "20-25°C"
+    conditions: str  # e.g., "Rain, Cloudy"
+    confidence: float  # 0.0 to 1.0
+    source: str

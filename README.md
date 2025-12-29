@@ -31,24 +31,26 @@
 
 
 <!-- CONTENT -->
-# Polymarket Agents
+# Weather Prediction AI Agent
 
-> 🤖 **AI-powered autonomous trading agents for Polymarket prediction markets**
+> 🌦️ **AI-powered weather prediction agent using advanced forecasting methodologies**
 
-Polymarket Agents is a modern, open-source framework for building sophisticated AI trading agents on Polymarket. Leverage state-of-the-art LLMs, RAG (Retrieval-Augmented Generation), and superforecasting methodologies to create intelligent trading systems that analyze markets, events, and news to make informed predictions.
+Weather Prediction AI Agent is a sophisticated, open-source framework for building intelligent weather forecasting systems. Leverage state-of-the-art LLMs, RAG (Retrieval-Augmented Generation), and superforecasting methodologies to create accurate weather predictions that analyze multiple data sources, historical patterns, and meteorological models.
 
 **Built with Python 3.12+** | **MIT Licensed** | **Production Ready**
 
-This code is free and publicly available under MIT License open source license ([terms of service](#terms-of-service))!
+This code is free and publicly available under MIT License open source license!
 
 ## Features
 
-- **AI-Powered Trading**: Autonomous trading agents using state-of-the-art LLMs
-- **Polymarket Integration**: Full API integration for markets, events, and trading
-- **RAG Support**: Local and remote RAG (Retrieval-Augmented Generation) for market analysis
-- **Data Sources**: Integration with news providers, web search, and betting services
-- **Superforecasting**: Advanced prediction capabilities using superforecaster methodologies
-- **Trending Markets**: Get trending markets sorted by 24-hour volume
+- **AI-Powered Weather Forecasting**: Advanced weather predictions using state-of-the-art LLMs
+- **Multiple Weather APIs**: Integration with OpenWeatherMap, WeatherAPI, and other weather services
+- **RAG Support**: Local and remote RAG (Retrieval-Augmented Generation) for weather pattern analysis
+- **Multi-Source Comparison**: Compare forecasts from multiple weather providers for better accuracy
+- **Superforecasting**: Advanced prediction capabilities using superforecaster methodologies applied to weather
+- **Historical Pattern Analysis**: Analyze historical weather data to improve predictions
+- **Location-Based Predictions**: Get accurate forecasts for any location worldwide
+- **Event-Specific Predictions**: Predict specific weather events (rain, snow, heatwaves, etc.)
 - **Modern Stack**: Built with Python 3.12+, LangChain, FastAPI, and modern tooling
 - **Docker Ready**: Containerized deployment for easy setup
 
@@ -61,7 +63,9 @@ This project requires **Python 3.12+**.
 - Python 3.12 or higher
 - pip (Python package manager)
 - (Optional) Docker for containerized deployment
-- (Optional) NewsAPI key for news integration
+- **OpenWeatherMap API key** (recommended) - Get from [openweathermap.org](https://openweathermap.org/api)
+- (Optional) WeatherAPI key - Get from [weatherapi.com](https://www.weatherapi.com/)
+- (Optional) NewsAPI key for weather news integration
 - (Optional) Tavily API key for web search
 
 ## Installation
@@ -139,11 +143,12 @@ This project requires **Python 3.12+**.
    Add the following environment variables:
    
    ```env
-   # Required for trading
-   POLYGON_WALLET_PRIVATE_KEY="your_private_key_here"
-   
    # Required for AI features
    OPENAI_API_KEY="your_openai_api_key_here"
+   
+   # Required for weather data (at least one)
+   OPENWEATHER_API_KEY="your_openweather_api_key_here"
+   WEATHERAPI_KEY="your_weatherapi_key_here"  # Optional alternative
    
    # Optional - for news integration
    NEWSAPI_API_KEY="your_newsapi_key_here"
@@ -158,9 +163,11 @@ This project requires **Python 3.12+**.
    - You can get a NewsAPI key from [newsapi.org](https://newsapi.org/)
    - You can get a Tavily key from [tavily.com](https://tavily.com/)
 
-6. **Load your wallet with USDC** (if trading)
+6. **Get Weather API Keys**
    
-   Before executing trades, ensure your Polygon wallet has sufficient USDC balance for trading.
+   Sign up for at least one weather API service:
+   - **OpenWeatherMap**: Free tier available at [openweathermap.org](https://openweathermap.org/api)
+   - **WeatherAPI**: Free tier available at [weatherapi.com](https://www.weatherapi.com/)
 
 ## Usage
 
@@ -187,6 +194,162 @@ python -m scripts.python.cli <command-name> --help
 ```
 
 ### Detailed Command Reference
+
+## Weather Prediction Commands
+
+### 1. Get Weather Forecast
+
+Get a comprehensive weather forecast for any location.
+
+**Command:**
+```bash
+python -m scripts.python.cli get-forecast <location> [--days DAYS]
+```
+
+**Parameters:**
+- `location` (required): Location name (e.g., "New York, NY" or "London, UK")
+- `--days` (optional): Number of days to forecast (default: 7)
+
+**Examples:**
+```bash
+# Get 7-day forecast for New York
+python -m scripts.python.cli get-forecast "New York, NY"
+
+# Get 14-day forecast for London
+python -m scripts.python.cli get-forecast "London, UK" --days 14
+
+# Get forecast for Tokyo
+python -m scripts.python.cli get-forecast "Tokyo, Japan"
+```
+
+**Output:** Comprehensive weather forecast with temperature, precipitation, wind, and conditions.
+
+### 2. Predict Specific Weather Condition
+
+Predict a specific weather event (rain, snow, heatwave, etc.).
+
+**Command:**
+```bash
+python -m scripts.python.cli predict-weather <location> <condition> [--days DAYS]
+```
+
+**Parameters:**
+- `location` (required): Location name
+- `condition` (required): Weather condition to predict (e.g., "rain", "snow", "heatwave")
+- `--days` (optional): Time horizon in days (default: 3)
+
+**Examples:**
+```bash
+# Predict rain in Seattle
+python -m scripts.python.cli predict-weather "Seattle, WA" rain
+
+# Predict snow in Denver
+python -m scripts.python.cli predict-weather "Denver, CO" snow --days 5
+
+# Predict heatwave in Phoenix
+python -m scripts.python.cli predict-weather "Phoenix, AZ" heatwave --days 7
+```
+
+**Output:** Probability and details of the predicted weather condition.
+
+### 3. Analyze Location Weather
+
+Get comprehensive weather analysis for a location.
+
+**Command:**
+```bash
+python -m scripts.python.cli analyze-location <location>
+```
+
+**Examples:**
+```bash
+# Analyze weather for Miami
+python -m scripts.python.cli analyze-location "Miami, FL"
+
+# Analyze weather for Paris
+python -m scripts.python.cli analyze-location "Paris, France"
+```
+
+**Output:** Detailed analysis including current conditions, forecast, and insights.
+
+### 4. Compare Forecast Sources
+
+Compare forecasts from multiple weather providers.
+
+**Command:**
+```bash
+python -m scripts.python.cli compare-forecasts <location>
+```
+
+**Examples:**
+```bash
+# Compare forecasts for Chicago
+python -m scripts.python.cli compare-forecasts "Chicago, IL"
+```
+
+**Output:** Comparison showing consensus and differences between forecast sources.
+
+### 5. Get Weather Recommendations
+
+Get weather-based recommendations for activities and planning.
+
+**Command:**
+```bash
+python -m scripts.python.cli weather-recommendations <location> [activity]
+```
+
+**Examples:**
+```bash
+# Get general recommendations
+python -m scripts.python.cli weather-recommendations "San Francisco, CA"
+
+# Get recommendations for specific activity
+python -m scripts.python.cli weather-recommendations "Orlando, FL" "outdoor wedding"
+```
+
+**Output:** Recommendations for activities, clothing, and planning based on weather.
+
+### 6. Ask Weather AI
+
+Ask the weather AI any weather-related question.
+
+**Command:**
+```bash
+python -m scripts.python.cli ask-weather-llm "<question>" [--location LOCATION]
+```
+
+**Examples:**
+```bash
+# Ask general weather question
+python -m scripts.python.cli ask-weather-llm "What causes thunderstorms?"
+
+# Ask location-specific question
+python -m scripts.python.cli ask-weather-llm "Will it be sunny tomorrow?" --location "Los Angeles, CA"
+```
+
+**Output:** AI-generated response to your weather question.
+
+### 7. Weather Superforecaster
+
+Get superforecaster prediction for a specific weather condition.
+
+**Command:**
+```bash
+python -m scripts.python.cli ask-weather-superforecaster <location> "<question>" <condition>
+```
+
+**Examples:**
+```bash
+# Predict rain probability
+python -m scripts.python.cli ask-weather-superforecaster "Portland, OR" "Will it rain this weekend?" rain
+
+# Predict temperature
+python -m scripts.python.cli ask-weather-superforecaster "Phoenix, AZ" "How hot will it get?" "high_temperature"
+```
+
+**Output:** Superforecaster analysis with probability and detailed reasoning.
+
+## Legacy Commands (Original PolyMarket Functionality)
 
 #### 1. Get All Markets
 

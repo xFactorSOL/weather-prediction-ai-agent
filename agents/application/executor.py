@@ -11,9 +11,10 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from agents.polymarket.gamma import GammaMarketClient as Gamma
 from agents.connectors.chroma import PolymarketRAG as Chroma
-from agents.utils.objects import SimpleEvent, SimpleMarket
+from agents.utils.objects import SimpleEvent, SimpleMarket, WeatherForecast, WeatherLocation, SimpleWeatherForecast
 from agents.application.prompts import Prompter
 from agents.polymarket.polymarket import Polymarket
+from agents.weather.openweather import WeatherDataClient
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,7 @@ class Executor:
         self.gamma = Gamma()
         self.chroma = Chroma()
         self.polymarket = Polymarket()
+        self.weather_client = WeatherDataClient()
 
     def get_llm_response(self, user_input: str) -> str:
         system_message = SystemMessage(content=str(self.prompter.market_analyst()))
@@ -189,3 +191,102 @@ class Executor:
         result = self.llm.invoke(prompt)
         content = result.content
         return content
+
+    # Weather-specific methods
+    def get_weather_llm_response(self, user_input: str) -> str:
+        """Get LLM response for weather-related queries"""
+        system_message = SystemMessage(content=str(self.prompter.weather_analyst()))
+        human_message = HumanMessage(content=user_input)
+        messages = [system_message, human_message]
+        result = self.llm.invoke(messages)
+        return result.content
+
+    def get_weather_superforecast(
+        self, 
+        location: str, 
+        question: str, 
+        condition: str,
+        weather_data: str = ""
+    ) -> str:
+        """Get superforecaster prediction for weather"""
+        # Fetch current weather data if not provided
+        if not weather_data:
+            try:
+                current_weather = self.weather_client.get_current_weather(location)
+                forecast = self.weather_client.get_forecast(location)
+                weather_data = f"Current: {current_weather}, Forecast: {forecast}"
+            except Exception as e:
+                logger.warning(f"Could not fetch weather data: {e}")
+                weather_data = "Weather data unavailable"
+        
+        prompt = self.prompter.weather_superforecaster(
+            location=location,
+            question=question,
+            condition=condition,
+            weather_data=weather_data
+        )
+        system_message = SystemMessage(content=str(self.prompter.weather_analyst()))
+        human_message = HumanMessage(content=prompt)
+        messages = [system_message, human_message]
+        result = self.llm.invoke(messages)
+        return result.content
+
+    def get_weather_forecast_llm(self, user_input: str, location: str = "") -> str:
+        """Get weather forecast with LLM analysis"""
+        try:
+            if location:
+                current_weather = self.weather_client.get_current_weather(location)
+                forecast = self.weather_client.get_forecast(location)
+                weather_data = {
+                    "current": current_weather,
+                    "forecast": forecast
+                }
+            else:
+                weather_data = {"message": "No location specified"}
+            
+            system_message = SystemMessage(
+                content=str(self.prompter.prompts_weather(
+                    current_weather=str(weather_data.get("current", "")),
+                    forecast_data=str(weather_data.get("forecast", ""))
+                ))
+            )
+            human_message = HumanMessage(content=user_input)
+            messages = [system_message, human_message]
+            result = self.llm.invoke(messages)
+            return result.content
+        except Exception as e:
+            logger.error(f"Error in get_weather_forecast_llm: {e}")
+            return f"Error generating weather forecast: {str(e)}"
+
+    def filter_weather_locations(self, locations: "list[WeatherLocation]") -> str:
+        """Filter weather locations using RAG"""
+        prompt = self.prompter.filter_weather_locations()
+        logger.debug(f"Filtering weather locations with RAG")
+        # For now, return filtered list (RAG integration to be added)
+        return locations
+
+    def filter_weather_forecasts(self, forecasts: "list[SimpleWeatherForecast]") -> str:
+        """Filter weather forecasts using RAG"""
+        prompt = self.prompter.filter_weather_forecasts()
+        logger.debug(f"Filtering weather forecasts")
+        # For now, return filtered list (RAG integration to be added)
+        return forecasts
+
+    def generate_comprehensive_forecast(
+        self, 
+        location: str, 
+        time_horizon: str = "7 days"
+    ) -> str:
+        """Generate comprehensive weather forecast"""
+        try:
+            forecast_data = self.weather_client.get_forecast(location)
+            prompt = self.prompter.generate_weather_forecast(
+                location=location,
+                time_horizon=time_horizon,
+                weather_data=str(forecast_data)
+            )
+            result = self.llm.invoke(prompt)
+            return result.content
+        except Exception as e:
+            logger.error(f"Error generating comprehensive forecast: {e}")
+            return f"Error: {str(e)}"

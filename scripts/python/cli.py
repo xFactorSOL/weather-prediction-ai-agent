@@ -12,6 +12,7 @@ from agents.connectors.news import News
 from agents.application.trade import Trader
 from agents.application.executor import Executor
 from agents.application.creator import Creator
+from agents.application.weather_predictor import WeatherPredictor
 
 # Configure logging
 logging.basicConfig(
@@ -20,7 +21,7 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 
-app = typer.Typer(help="Polymarket AI Trading Agent CLI")
+app = typer.Typer(help="Weather Prediction AI Agent CLI")
 console = Console()
 
 # Initialize clients lazily to avoid import-time errors
@@ -191,6 +192,108 @@ def run_autonomous_trader() -> None:
     trader = Trader()
     trader.one_best_trade()
     console.print("[green]Autonomous trading completed![/green]")
+
+
+# Weather-specific commands
+@app.command()
+def get_forecast(location: str, days: int = 7) -> None:
+    """
+    Get weather forecast for a location
+    """
+    console.print(f"[cyan]Fetching {days}-day forecast for {location}...[/cyan]")
+    predictor = WeatherPredictor()
+    forecast = predictor.get_best_forecast(location)
+    console.print("[green]Weather Forecast:[/green]")
+    console.print(forecast)
+
+
+@app.command()
+def predict_weather(location: str, condition: str, days: int = 3) -> None:
+    """
+    Predict a specific weather condition (e.g., rain, snow, heatwave)
+    """
+    console.print(f"[cyan]Predicting {condition} for {location}...[/cyan]")
+    predictor = WeatherPredictor()
+    prediction = predictor.predict_weather_event(
+        location=location,
+        event_type=condition,
+        time_horizon=f"{days} days"
+    )
+    console.print("[green]Weather Prediction:[/green]")
+    console.print(prediction)
+
+
+@app.command()
+def analyze_location(location: str) -> None:
+    """
+    Comprehensive weather analysis for a location
+    """
+    console.print(f"[cyan]Analyzing weather for {location}...[/cyan]")
+    predictor = WeatherPredictor()
+    analysis = predictor.analyze_location_weather(location)
+    console.print("[green]Weather Analysis:[/green]")
+    pprint(analysis)
+
+
+@app.command()
+def compare_forecasts(location: str) -> None:
+    """
+    Compare forecasts from multiple weather sources
+    """
+    console.print(f"[cyan]Comparing forecast sources for {location}...[/cyan]")
+    predictor = WeatherPredictor()
+    comparison = predictor.compare_forecast_sources(location)
+    console.print("[green]Forecast Comparison:[/green]")
+    pprint(comparison)
+
+
+@app.command()
+def weather_recommendations(location: str, activity: str = "") -> None:
+    """
+    Get weather-based recommendations for activities or planning
+    """
+    console.print(f"[cyan]Getting recommendations for {location}...[/cyan]")
+    predictor = WeatherPredictor()
+    recommendations = predictor.get_weather_recommendations(location, activity)
+    console.print("[green]Weather Recommendations:[/green]")
+    console.print(recommendations)
+
+
+@app.command()
+def ask_weather_llm(question: str, location: str = "") -> None:
+    """
+    Ask the weather AI any weather-related question
+    """
+    console.print(f"[cyan]Querying Weather AI: {question}[/cyan]")
+    executor = Executor()
+    if location:
+        response = executor.get_weather_forecast_llm(question, location)
+    else:
+        response = executor.get_weather_llm_response(question)
+    console.print("[green]Weather AI Response:[/green]")
+    console.print(response)
+
+
+@app.command()
+def ask_weather_superforecaster(
+    location: str, 
+    question: str, 
+    condition: str
+) -> None:
+    """
+    Get superforecaster prediction for a specific weather condition
+    """
+    console.print(f"[cyan]Location: {location}[/cyan]")
+    console.print(f"[cyan]Question: {question}[/cyan]")
+    console.print(f"[cyan]Condition: {condition}[/cyan]")
+    executor = Executor()
+    response = executor.get_weather_superforecast(
+        location=location,
+        question=question,
+        condition=condition
+    )
+    console.print("[green]Superforecaster Response:[/green]")
+    console.print(response)
 
 
 if __name__ == "__main__":
