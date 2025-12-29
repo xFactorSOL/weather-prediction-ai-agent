@@ -32,27 +32,35 @@ _weather_predictor = None
 _executor = None
 
 def get_weather_predictor():
-    """Lazy initialization of WeatherPredictor"""
+    """Lazy initialization of WeatherPredictor - imports only when needed"""
     global _weather_predictor
     if _weather_predictor is None:
         try:
+            # Import only when needed to avoid import chain issues
             from agents.application.weather_predictor import WeatherPredictor
             _weather_predictor = WeatherPredictor()
         except Exception as e:
-            logger.error(f"Failed to initialize WeatherPredictor: {e}")
-            raise
+            logger.error(f"Failed to initialize WeatherPredictor: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=503, 
+                detail=f"Weather prediction service unavailable: {str(e)}"
+            )
     return _weather_predictor
 
 def get_executor():
-    """Lazy initialization of Executor"""
+    """Lazy initialization of Executor - imports only when needed"""
     global _executor
     if _executor is None:
         try:
+            # Import only when needed to avoid import chain issues
             from agents.application.executor import Executor
             _executor = Executor()
         except Exception as e:
-            logger.error(f"Failed to initialize Executor: {e}")
-            raise
+            logger.error(f"Failed to initialize Executor: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=503, 
+                detail=f"Executor service unavailable: {str(e)}"
+            )
     return _executor
 
 

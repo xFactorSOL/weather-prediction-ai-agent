@@ -11,7 +11,16 @@ from dotenv import load_dotenv
 
 from web3 import Web3
 from web3.constants import MAX_INT
-from web3.middleware import geth_poa_middleware
+try:
+    from web3.middleware import geth_poa_middleware
+except ImportError:
+    # web3.py v6+ moved this to a different location
+    try:
+        from web3.middleware import ExtraDataToPOAMiddleware as geth_poa_middleware
+    except ImportError:
+        # If still not available, create a no-op function
+        def geth_poa_middleware(make_request, web3):
+            return make_request
 
 import httpx
 from py_clob_client.client import ClobClient
@@ -57,7 +66,13 @@ class Polymarket:
         self.ctf_address = "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045"
 
         self.web3 = Web3(Web3.HTTPProvider(self.polygon_rpc))
-        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+        # Only inject middleware if it's available and needed
+        try:
+            if geth_poa_middleware and hasattr(self.web3, 'middleware_onion'):
+                self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+        except Exception:
+            # Middleware injection is optional for weather agent
+            pass
 
         self.usdc = self.web3.eth.contract(
             address=self.usdc_address, abi=self.erc20_approve
