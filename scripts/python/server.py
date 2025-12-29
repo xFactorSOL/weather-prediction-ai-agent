@@ -8,9 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import logging
 
-from agents.application.weather_predictor import WeatherPredictor
-from agents.application.executor import Executor
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -30,9 +27,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize predictors
-weather_predictor = WeatherPredictor()
-executor = Executor()
+# Lazy initialization - only import and initialize when needed
+_weather_predictor = None
+_executor = None
+
+def get_weather_predictor():
+    """Lazy initialization of WeatherPredictor"""
+    global _weather_predictor
+    if _weather_predictor is None:
+        try:
+            from agents.application.weather_predictor import WeatherPredictor
+            _weather_predictor = WeatherPredictor()
+        except Exception as e:
+            logger.error(f"Failed to initialize WeatherPredictor: {e}")
+            raise
+    return _weather_predictor
+
+def get_executor():
+    """Lazy initialization of Executor"""
+    global _executor
+    if _executor is None:
+        try:
+            from agents.application.executor import Executor
+            _executor = Executor()
+        except Exception as e:
+            logger.error(f"Failed to initialize Executor: {e}")
+            raise
+    return _executor
 
 
 # Request/Response models
@@ -93,7 +114,8 @@ def get_forecast(request: ForecastRequest):
     """Get comprehensive weather forecast for a location"""
     try:
         logger.info(f"Forecast request for {request.location}")
-        forecast = weather_predictor.get_best_forecast(
+        predictor = get_weather_predictor()
+        forecast = predictor.get_best_forecast(
             location=request.location
         )
         return {
@@ -114,7 +136,8 @@ def get_forecast_get(
     """Get comprehensive weather forecast for a location (GET)"""
     try:
         logger.info(f"Forecast request for {location}")
-        forecast = weather_predictor.get_best_forecast(location=location)
+        predictor = get_weather_predictor()
+        forecast = predictor.get_best_forecast(location=location)
         return {
             "location": location,
             "forecast": forecast,
@@ -130,7 +153,8 @@ def predict_weather(request: PredictionRequest):
     """Predict a specific weather condition"""
     try:
         logger.info(f"Prediction request: {request.condition} for {request.location}")
-        prediction = weather_predictor.predict_weather_event(
+        predictor = get_weather_predictor()
+        prediction = predictor.predict_weather_event(
             location=request.location,
             event_type=request.condition,
             time_horizon=f"{request.days} days"
@@ -155,7 +179,8 @@ def predict_weather_get(
     """Predict a specific weather condition (GET)"""
     try:
         logger.info(f"Prediction request: {condition} for {location}")
-        prediction = weather_predictor.predict_weather_event(
+        predictor = get_weather_predictor()
+        prediction = predictor.predict_weather_event(
             location=location,
             event_type=condition,
             time_horizon=f"{days} days"
@@ -178,7 +203,8 @@ def analyze_location(
     """Comprehensive weather analysis for a location"""
     try:
         logger.info(f"Analysis request for {location}")
-        analysis = weather_predictor.analyze_location_weather(location)
+        predictor = get_weather_predictor()
+        analysis = predictor.analyze_location_weather(location)
         return analysis
     except Exception as e:
         logger.error(f"Error in analysis: {e}", exc_info=True)
@@ -192,7 +218,8 @@ def compare_forecasts(
     """Compare forecasts from multiple weather sources"""
     try:
         logger.info(f"Comparison request for {location}")
-        comparison = weather_predictor.compare_forecast_sources(location)
+        predictor = get_weather_predictor()
+        comparison = predictor.compare_forecast_sources(location)
         return comparison
     except Exception as e:
         logger.error(f"Error in comparison: {e}", exc_info=True)
@@ -204,7 +231,8 @@ def get_recommendations(request: RecommendationRequest):
     """Get weather-based recommendations"""
     try:
         logger.info(f"Recommendations request for {request.location}")
-        recommendations = weather_predictor.get_weather_recommendations(
+        predictor = get_weather_predictor()
+        recommendations = predictor.get_weather_recommendations(
             location=request.location,
             activity=request.activity
         )
@@ -226,7 +254,8 @@ def get_recommendations_get(
     """Get weather-based recommendations (GET)"""
     try:
         logger.info(f"Recommendations request for {location}")
-        recommendations = weather_predictor.get_weather_recommendations(
+        predictor = get_weather_predictor()
+        recommendations = predictor.get_weather_recommendations(
             location=location,
             activity=activity
         )
@@ -245,7 +274,8 @@ def get_superforecast(request: SuperforecastRequest):
     """Get superforecaster prediction for a specific weather condition"""
     try:
         logger.info(f"Superforecast request: {request.question} for {request.location}")
-        prediction = executor.get_weather_superforecast(
+        exec = get_executor()
+        prediction = exec.get_weather_superforecast(
             location=request.location,
             question=request.question,
             condition=request.condition
@@ -266,13 +296,14 @@ def ask_weather_ai(request: WeatherQuery):
     """Ask the weather AI any weather-related question"""
     try:
         logger.info(f"Weather AI query: {request.question}")
+        exec = get_executor()
         if request.location:
-            response = executor.get_weather_forecast_llm(
+            response = exec.get_weather_forecast_llm(
                 user_input=request.question,
                 location=request.location
             )
         else:
-            response = executor.get_weather_llm_response(request.question)
+            response = exec.get_weather_llm_response(request.question)
         return {
             "question": request.question,
             "location": request.location,
@@ -291,13 +322,14 @@ def ask_weather_ai_get(
     """Ask the weather AI any weather-related question (GET)"""
     try:
         logger.info(f"Weather AI query: {question}")
+        exec = get_executor()
         if location:
-            response = executor.get_weather_forecast_llm(
+            response = exec.get_weather_forecast_llm(
                 user_input=question,
                 location=location
             )
         else:
-            response = executor.get_weather_llm_response(question)
+            response = exec.get_weather_llm_response(question)
         return {
             "question": question,
             "location": location,
